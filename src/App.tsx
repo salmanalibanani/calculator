@@ -1,5 +1,5 @@
 import './App.css';
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 
 import { CurrencyDropdown } from './components/CurrencyDropdown';
 import { useFormik } from 'formik';
@@ -54,9 +54,9 @@ function App() {
 
   const timers: number[] = [];
   const [rates, setRates] = React.useState<RateRequestResult>({rate: 0, currencyPair:'', showResults:false});
-  const [timerList, setTimerList] = React.useState(timers);
   const [isMounted, setIsMounted] = React.useState(false)
-  const [makeCalls, setMakeCalls] = React.useState(false);
+  const makeCalls = React.useRef(false);
+  const timerList = useRef(timers);
 
   var timer1: number = 0;
 
@@ -81,16 +81,14 @@ function App() {
       console.log('updateRates failed');
     }
 
-    if (makeCalls) {
+    if (makeCalls.current) {
       timer1 = window.setTimeout(updateRates, 5000);
       console.log("I am here 78");
       console.log('timer1 is');
       console.log(timer1);
-      var t = timerList;
-      t.push(timer1);
-      setTimerList(t);
+      timerList.current.push(timer1);
       console.log('timerList is');
-      console.log(timerList);
+      console.log(timerList.current);
       console.log('**************');
     }    
     // console.log('timer');
@@ -117,16 +115,16 @@ function App() {
         }
     }, [rates]);
   
-  useEffect(() => {
-    console.log("I am here abc");
-    if (makeCalls) {
-      console.log("makeCalls is true");
-      updateRates();
-    }
-    else {
-      console.log('setting calls to false');
-    }
-  }, [makeCalls]);
+  // useEffect(() => {
+  //   console.log("I am here abc");
+  //   if (makeCalls) {
+  //     console.log("makeCalls is true");
+  //     updateRates();
+  //   }
+  //   else {
+  //     console.log('setting calls to false');
+  //   }
+  // }, [makeCalls]);
 
   const formik = useFormik<RateRequest>({
     initialValues: {
@@ -142,7 +140,10 @@ function App() {
     onSubmit: async (values) => {
       try {
         console.log('onSubmit');
-        setMakeCalls(true);
+        StopCalls();
+        makeCalls.current = true;
+        formik.values.showResults = false;
+        updateRates();
       }
       catch (e)
       {
@@ -152,9 +153,16 @@ function App() {
     }
   });
   
+  function something(e: any)
+  {
+    console.log('inside something');
+    formik.values.showResults = false;
+    formik.handleChange(e);
+  }
+
   function StopCalls() {
     console.log('StopCalls called');
-    setMakeCalls(false);
+    makeCalls.current = false;
     // var highestTimeoutId = setTimeout(";");
     // console.log('highestTimeoutId');
     // console.log(highestTimeoutId);
@@ -163,9 +171,11 @@ function App() {
     //   window.clearTimeout(i); 
     // }
     
-    // console.log("Calls stopped. timer list is");
-    // console.log(timerList);
-    // timerList.forEach((item) =>  window.clearTimeout(item));
+    console.log("Calls stopped. timer list is");
+    console.log(timerList);
+    timerList.current.forEach((item) =>  window.clearTimeout(item));
+    timerList.current = [];
+    
   }
 
   return (
@@ -191,7 +201,7 @@ function App() {
           id="clientSellCurrency"
           name="clientSellCurrency"
           value={formik.values.clientSellCurrency}
-          onChange={formik.handleChange}
+          onChange={something}
           error={formik.touched.clientSellCurrency && Boolean(formik.errors.clientSellCurrency)}
           style={{ width: 300 }}
           label="Sell"
@@ -206,7 +216,7 @@ function App() {
           id="clientBuyCurrency"
           name="clientBuyCurrency"
           value={formik.values.clientBuyCurrency}
-          onChange={formik.handleChange}
+          onChange={something}
           error={formik.touched.clientBuyCurrency && Boolean(formik.errors.clientBuyCurrency)}
           style={{ width: 300 }}
           label="Buy"
