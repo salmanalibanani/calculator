@@ -1,12 +1,11 @@
-import './App.css';
 import React, {useState, useEffect, useRef} from 'react';
-
 import { CurrencyDropdown } from './components/CurrencyDropdown';
 import { useFormik } from 'formik';
-import { Button, FormLabel, TextField } from '@material-ui/core';
+import { Button, TextField } from '@material-ui/core';
 import * as Yup from 'yup'
 import { Results } from './components/Results';
 import axios from 'axios';
+import './App.css';
 
 interface RateRequest {
   clientBuyCurrency: string;
@@ -32,12 +31,6 @@ async function getRates(clientBuyCurrency: string, clientSellCurrency:string, am
       currencyPair: ''
     }
 
-    //console.log('clientBuyCurrency');
-    //console.log(clientBuyCurrency);
-
-    //console.log('clientSellCurrency');
-    //console.log(clientSellCurrency);
-
     var r = await axios.get(`https://wnvgqqihv6.execute-api.ap-southeast-2.amazonaws.com/Public/public/rates?Buy=${clientBuyCurrency}&Sell=${clientSellCurrency}&Amount=${amount}&Fixed=sell`);
 
     if (r.data.clientRate) {
@@ -49,12 +42,10 @@ async function getRates(clientBuyCurrency: string, clientSellCurrency:string, am
   return result;
 }
 
-
 function App() {
 
   const timers: number[] = [];
-  const [rates, setRates] = React.useState<RateRequestResult>({rate: 0, currencyPair:'', showResults:false});
-  const [isMounted, setIsMounted] = React.useState(false)
+  const [rates, setRates] = useState<RateRequestResult>({rate: 0, currencyPair:'', showResults:false});
   const makeCalls = React.useRef(false);
   const timerList = useRef(timers);
 
@@ -62,16 +53,7 @@ function App() {
 
   async function updateRates() {
     try {
-      console.log('Inside updateRates');
-      console.log('makeCalls');
-      console.log(makeCalls);
-      console.log('formik.values.clientBuyCurrency');
-      console.log(formik.values.clientBuyCurrency);
-      if (formik.values.clientBuyCurrency == '')
-      {
-        console.log('Not making the network call');
-      }
-      else
+      if (formik.values.clientBuyCurrency != '')
       {
         const result = await getRates(formik.values.clientBuyCurrency, formik.values.clientSellCurrency, formik.values.amount);
         setRates(result);
@@ -83,17 +65,8 @@ function App() {
 
     if (makeCalls.current) {
       timer1 = window.setTimeout(updateRates, 5000);
-      console.log("I am here 78");
-      console.log('timer1 is');
-      console.log(timer1);
       timerList.current.push(timer1);
-      console.log('timerList is');
-      console.log(timerList.current);
-      console.log('**************');
     }    
-    // console.log('timer');
-    // console.log(timer);
-    // console.log('I am here 79');
   };
   
   const validationSchema = Yup.object().shape({
@@ -104,10 +77,6 @@ function App() {
   
   useEffect(() => {
     
-    if (!isMounted) {
-      setIsMounted(true);
-    }
-    
     if (rates.showResults) {
           formik.values.showResults = true;
           formik.values.rate = rates.rate;
@@ -115,17 +84,6 @@ function App() {
         }
     }, [rates]);
   
-  // useEffect(() => {
-  //   console.log("I am here abc");
-  //   if (makeCalls) {
-  //     console.log("makeCalls is true");
-  //     updateRates();
-  //   }
-  //   else {
-  //     console.log('setting calls to false');
-  //   }
-  // }, [makeCalls]);
-
   const formik = useFormik<RateRequest>({
     initialValues: {
       clientBuyCurrency: '', 
@@ -153,26 +111,15 @@ function App() {
     }
   });
   
-  function something(e: any)
+  function handleDropdownChange(e: any)
   {
-    console.log('inside something');
     formik.values.showResults = false;
+    StopCalls();
     formik.handleChange(e);
   }
 
   function StopCalls() {
-    console.log('StopCalls called');
     makeCalls.current = false;
-    // var highestTimeoutId = setTimeout(";");
-    // console.log('highestTimeoutId');
-    // console.log(highestTimeoutId);
-
-    // for (var i = highestTimeoutId + 100 ; i > 0; i--) {
-    //   window.clearTimeout(i); 
-    // }
-    
-    console.log("Calls stopped. timer list is");
-    console.log(timerList);
     timerList.current.forEach((item) =>  window.clearTimeout(item));
     timerList.current = [];
     
@@ -201,7 +148,7 @@ function App() {
           id="clientSellCurrency"
           name="clientSellCurrency"
           value={formik.values.clientSellCurrency}
-          onChange={something}
+          onChange={handleDropdownChange}
           error={formik.touched.clientSellCurrency && Boolean(formik.errors.clientSellCurrency)}
           style={{ width: 300 }}
           label="Sell"
@@ -216,7 +163,7 @@ function App() {
           id="clientBuyCurrency"
           name="clientBuyCurrency"
           value={formik.values.clientBuyCurrency}
-          onChange={something}
+          onChange={handleDropdownChange}
           error={formik.touched.clientBuyCurrency && Boolean(formik.errors.clientBuyCurrency)}
           style={{ width: 300 }}
           label="Buy"
@@ -230,9 +177,6 @@ function App() {
         <br />
         <Button type="submit" variant="contained">
           Convert
-        </Button>
-        <Button onClick={StopCalls} variant="contained">
-          Stop
         </Button>
       </div>
 

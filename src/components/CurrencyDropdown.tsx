@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { MenuItem, TextField, TextFieldProps } from '@material-ui/core';
 
 export interface Currency {

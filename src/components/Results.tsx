@@ -15,12 +15,13 @@ export const Results : React.FC<IResults> = (props) => {
 
   return (
     <div className="Results">
+      <div>You are selling: {props.ClientSellCurrency} {props.Amount}</div>
       <div data-testid='targetCurrency'>Target currency: {props.ClientBuyCurrency}</div>
-      <div data-testid='baseRate'>Base Rate: {props.Rate}</div>
-      <div>Base Amount: {(markupService.BaseAmount()).toFixed(2) }</div> 
-      <div>Paytron Rate: { (markupService.EffectiveRate()).toFixed(4) } </div>
-      <div>Paytron Markup: { (markupService.PaytronMarkup()).toFixed(4) } </div>
-      <div>Final Amount: { (markupService.FinalAmount()).toFixed(4) } </div>
+      <div data-testid='baseRate'>Paytron base rate: {props.Rate}</div>
+      <div>Amount @ base rate: {(markupService.BaseAmount()).toFixed(2) }</div> 
+      <div>Paytron rate: { (markupService.EffectiveRate()).toFixed(4) } </div>
+      <div>Paytron markup: {props.ClientBuyCurrency} { (markupService.PaytronMarkup()).toFixed(4) } </div>
+      <div>Final amount: {props.ClientBuyCurrency} { (markupService.FinalAmount()).toFixed(4) } </div>
     </div>
 
   );
