@@ -32,6 +32,12 @@ async function getRates(clientBuyCurrency: string, clientSellCurrency:string, am
       currencyPair: ''
     }
 
+    console.log('clientBuyCurrency');
+    console.log(clientBuyCurrency);
+
+    console.log('clientSellCurrency');
+    console.log(clientSellCurrency);
+
     var r = await axios.get(`https://wnvgqqihv6.execute-api.ap-southeast-2.amazonaws.com/Public/public/rates?Buy=${clientBuyCurrency}&Sell=${clientSellCurrency}&Amount=${amount}&Fixed=sell`);
 
     if (r.data.clientRate) {
@@ -47,9 +53,9 @@ async function getRates(clientBuyCurrency: string, clientSellCurrency:string, am
 function App() {
 
   const [rates, setRates] = React.useState<RateRequestResult>({rate: 0, currencyPair:'', showResults:false});
-  const [timer, setTimer] = React.useState(0);
+  const [timer, setTimer] = React.useState([]);
 
-  async function updateRates(clientBuyCurrency: string, clientSellCurrency: string, amount:number) {
+  async function updateRates() {
     try {
       const result = await getRates(formik.values.clientBuyCurrency, formik.values.clientSellCurrency, formik.values.amount);
       setRates(result);
@@ -57,8 +63,9 @@ function App() {
     catch(e) {
       console.log('updateRates failed');
     }
-    clearTimeout(timer);
-    setTimer(setTimeout(updateRates, 1000))
+    window.clearTimeout(timer.push);
+    timer.push(window.setTimeout(updateRates, 1000));
+    
   };
   
   const validationSchema = Yup.object().shape({
@@ -92,7 +99,7 @@ function App() {
     
     onSubmit: async (values) => {
       try {
-        await updateRates(formik.values.clientBuyCurrency, formik.values.clientSellCurrency, formik.values.amount);
+        await updateRates();
       }
       catch (e)
       {
