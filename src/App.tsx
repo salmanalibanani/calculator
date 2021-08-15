@@ -32,11 +32,11 @@ async function getRates(clientBuyCurrency: string, clientSellCurrency:string, am
       currencyPair: ''
     }
 
-    console.log('clientBuyCurrency');
-    console.log(clientBuyCurrency);
+    //console.log('clientBuyCurrency');
+    //console.log(clientBuyCurrency);
 
-    console.log('clientSellCurrency');
-    console.log(clientSellCurrency);
+    //console.log('clientSellCurrency');
+    //console.log(clientSellCurrency);
 
     var r = await axios.get(`https://wnvgqqihv6.execute-api.ap-southeast-2.amazonaws.com/Public/public/rates?Buy=${clientBuyCurrency}&Sell=${clientSellCurrency}&Amount=${amount}&Fixed=sell`);
 
@@ -52,20 +52,50 @@ async function getRates(clientBuyCurrency: string, clientSellCurrency:string, am
 
 function App() {
 
+  const timers: number[] = [];
   const [rates, setRates] = React.useState<RateRequestResult>({rate: 0, currencyPair:'', showResults:false});
-  const [timer, setTimer] = React.useState([]);
+  const [timerList, setTimerList] = React.useState(timers);
+  const [isMounted, setIsMounted] = React.useState(false)
+  const [makeCalls, setMakeCalls] = React.useState(false);
+
+  var timer1: number = 0;
 
   async function updateRates() {
     try {
-      const result = await getRates(formik.values.clientBuyCurrency, formik.values.clientSellCurrency, formik.values.amount);
-      setRates(result);
+      console.log('Inside updateRates');
+      console.log('makeCalls');
+      console.log(makeCalls);
+      console.log('formik.values.clientBuyCurrency');
+      console.log(formik.values.clientBuyCurrency);
+      if (formik.values.clientBuyCurrency == '')
+      {
+        console.log('Not making the network call');
+      }
+      else
+      {
+        const result = await getRates(formik.values.clientBuyCurrency, formik.values.clientSellCurrency, formik.values.amount);
+        setRates(result);
+      }
     }
     catch(e) {
       console.log('updateRates failed');
     }
-    window.clearTimeout(timer.push);
-    timer.push(window.setTimeout(updateRates, 1000));
-    
+
+    if (makeCalls) {
+      timer1 = window.setTimeout(updateRates, 5000);
+      console.log("I am here 78");
+      console.log('timer1 is');
+      console.log(timer1);
+      var t = timerList;
+      t.push(timer1);
+      setTimerList(t);
+      console.log('timerList is');
+      console.log(timerList);
+      console.log('**************');
+    }    
+    // console.log('timer');
+    // console.log(timer);
+    // console.log('I am here 79');
   };
   
   const validationSchema = Yup.object().shape({
@@ -75,17 +105,29 @@ function App() {
   });
   
   useEffect(() => {
-    console.log('useEffect called.  rates is');
-    console.log(rates);
-
+    
+    if (!isMounted) {
+      setIsMounted(true);
+    }
+    
     if (rates.showResults) {
           formik.values.showResults = true;
           formik.values.rate = rates.rate;
           formik.values.currencyPair = rates.currencyPair;
         }
-
-  }, [rates]);
+    }, [rates]);
   
+  useEffect(() => {
+    console.log("I am here abc");
+    if (makeCalls) {
+      console.log("makeCalls is true");
+      updateRates();
+    }
+    else {
+      console.log('setting calls to false');
+    }
+  }, [makeCalls]);
+
   const formik = useFormik<RateRequest>({
     initialValues: {
       clientBuyCurrency: '', 
@@ -99,7 +141,8 @@ function App() {
     
     onSubmit: async (values) => {
       try {
-        await updateRates();
+        console.log('onSubmit');
+        setMakeCalls(true);
       }
       catch (e)
       {
@@ -109,6 +152,22 @@ function App() {
     }
   });
   
+  function StopCalls() {
+    console.log('StopCalls called');
+    setMakeCalls(false);
+    // var highestTimeoutId = setTimeout(";");
+    // console.log('highestTimeoutId');
+    // console.log(highestTimeoutId);
+
+    // for (var i = highestTimeoutId + 100 ; i > 0; i--) {
+    //   window.clearTimeout(i); 
+    // }
+    
+    // console.log("Calls stopped. timer list is");
+    // console.log(timerList);
+    // timerList.forEach((item) =>  window.clearTimeout(item));
+  }
+
   return (
     <div className="App">
     <form onSubmit={formik.handleSubmit}>
@@ -162,6 +221,9 @@ function App() {
         <Button type="submit" variant="contained">
           Convert
         </Button>
+        <Button onClick={StopCalls} variant="contained">
+          Stop
+        </Button>
       </div>
 
       { formik.values.showResults && <Results ClientBuyCurrency={formik.values.clientBuyCurrency} ClientSellCurrency={formik.values.clientSellCurrency} CurrencyPair={formik.values.currencyPair} Amount={formik.values.amount} Rate={formik.values.rate} />   }
@@ -169,6 +231,6 @@ function App() {
     </form>
     </div>
   );
-}
+};
 
 export default App;
